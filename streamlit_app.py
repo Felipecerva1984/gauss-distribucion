@@ -2,6 +2,8 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import io
+
 
 st.set_page_config(page_title="Distribución tipo Gauss", layout="centered")
 st.title("🎯 Generador de Distribución tipo Campana de Gauss")
@@ -29,6 +31,19 @@ st.dataframe(
         "Cajas estimadas": "{:,.0f}"
     }),
     use_container_width=True
+)
+# Exportar a Excel
+output = io.BytesIO()
+with pd.ExcelWriter(output, engine='openpyxl') as writer:
+    df.to_excel(writer, index=False, sheet_name='Distribución')
+    writer.save()
+    processed_data = output.getvalue()
+
+st.download_button(
+    label="📥 Descargar Excel",
+    data=processed_data,
+    file_name="distribucion_gauss.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
 
 
