@@ -33,20 +33,22 @@ st.dataframe(
     use_container_width=True
 )
 
-# Exportar a Excel
+
+# Crear archivo Excel en memoria
 
 output = io.BytesIO()
 with pd.ExcelWriter(output, engine='openpyxl') as writer:
     df.to_excel(writer, index=False, sheet_name='Distribución')
-    processed_data = output.getvalue()
     
 # 🔧 Mover el puntero al inicio del archivo
 
 output.seek(0)
 
+# Botón de descarga
+
 st.download_button(
     label="📥 Descargar Excel",
-    data=processed_data,
+    data=output,
     file_name="distribucion_gauss.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
