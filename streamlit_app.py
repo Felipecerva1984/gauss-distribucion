@@ -37,7 +37,8 @@ output = io.BytesIO()
 with pd.ExcelWriter(output, engine='openpyxl') as writer:
     df.to_excel(writer, index=False, sheet_name='Distribución')
     processed_data = output.getvalue()
-
+# 🔧 Mover el puntero al inicio del archivo
+output.seek(0)
 st.download_button(
     label="📥 Descargar Excel",
     data=processed_data,
