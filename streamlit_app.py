@@ -36,7 +36,6 @@ st.dataframe(
 output = io.BytesIO()
 with pd.ExcelWriter(output, engine='openpyxl') as writer:
     df.to_excel(writer, index=False, sheet_name='Distribución')
-    writer.save()
     processed_data = output.getvalue()
 
 st.download_button(
