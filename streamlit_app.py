@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import io
+import datetime
 
 st.set_page_config(page_title="Distribución tipo Gauss", layout="centered")
 st.title("🎯 Generador de Distribución tipo Campana de Gauss")
@@ -19,14 +20,13 @@ gaussian = np.exp(-0.5 * ((x - mean) / std) ** 2)
 percentages = gaussian / gaussian.sum() * 100
 cajas = (percentages / 100) * cajas_totales
 
-# Tabla de resultados
+# Mostrar tabla original
 df = pd.DataFrame({
     'X': x,
     'Porcentaje (%)': percentages,
     'Cajas estimadas': cajas
 })
 
-# Mostrar tabla formateada
 st.dataframe(
     df.style.format({
         "Porcentaje (%)": "{:.2f}",
@@ -35,21 +35,7 @@ st.dataframe(
     use_container_width=True
 )
 
-# Botón para descargar Excel
-output = io.BytesIO()
-with pd.ExcelWriter(output, engine='openpyxl') as writer:
-    df.to_excel(writer, index=False, sheet_name='Distribución')
-
-output.seek(0)  # Muy importante para evitar archivos corruptos
-
-st.download_button(
-    label="📥 Descargar Excel",
-    data=output,
-    file_name="distribucion_gauss.xlsx",
-    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-)
-
-# Gráfico de la curva
+# Crear el gráfico
 fig, ax = plt.subplots(figsize=(10, 4))
 ax.plot(x, percentages, color='blue')
 ax.fill_between(x, 0, percentages, color='blue', alpha=0.3)
@@ -58,6 +44,39 @@ ax.set_ylabel("Porcentaje (%)")
 ax.set_title("Curva de Gauss")
 ax.grid(True)
 st.pyplot(fig)
+
+# Guardar gráfico como imagen en memoria
+img_buffer = io.BytesIO()
+fig.savefig(img_buffer, format='png')
+plt.close(fig)
+img_buffer.seek(0)
+
+# Generar nombre con fecha
+hoy = datetime.date.today().isoformat()
+nombre_archivo = f"distribucion_gauss_{hoy}.xlsx"
+
+# Crear nuevo DataFrame horizontal
+headers = [f"X{i}" for i in x]
+horizontal_df = pd.DataFrame([percentages, cajas], index=["Porcentaje (%)", "Cajas estimadas"], columns=headers)
+
+# Crear Excel en memoria
+excel_buffer = io.BytesIO()
+with pd.ExcelWriter(excel_buffer, engine='xlsxwriter') as writer:
+    horizontal_df.to_excel(writer, sheet_name='Distribución Horizontal')
+
+    # Insertar imagen
+    worksheet = writer.sheets['Distribución Horizontal']
+    worksheet.insert_image(len(horizontal_df.index) + 3, 0, 'grafico.png', {'image_data': img_buffer})
+
+excel_buffer.seek(0)
+
+# Botón de descarga
+st.download_button(
+    label="📥 Descargar Excel con gráfico (horizontal)",
+    data=excel_buffer,
+    file_name=nombre_archivo,
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
 
 # Resumen
 st.markdown(f"🔢 **Suma total de porcentajes:** {percentages.sum():.2f}%")
