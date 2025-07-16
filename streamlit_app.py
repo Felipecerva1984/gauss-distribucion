@@ -20,13 +20,14 @@ gaussian = np.exp(-0.5 * ((x - mean) / std) ** 2)
 percentages = gaussian / gaussian.sum() * 100
 cajas = (percentages / 100) * cajas_totales
 
-# Mostrar tabla original
+# Crear DataFrame vertical (para mostrar en pantalla)
 df = pd.DataFrame({
     'X': x,
-    'Porcentaje (%)': percentages,
-    'Cajas estimadas': cajas
+    'Porcentaje (%)': np.round(percentages, 2),
+    'Cajas estimadas': np.round(cajas, 0)
 })
 
+# Mostrar tabla
 st.dataframe(
     df.style.format({
         "Porcentaje (%)": "{:.2f}",
@@ -35,7 +36,7 @@ st.dataframe(
     use_container_width=True
 )
 
-# Crear el gráfico
+# Gráfico de la curva
 fig, ax = plt.subplots(figsize=(10, 4))
 ax.plot(x, percentages, color='blue')
 ax.fill_between(x, 0, percentages, color='blue', alpha=0.3)
@@ -45,38 +46,49 @@ ax.set_title("Curva de Gauss")
 ax.grid(True)
 st.pyplot(fig)
 
-# Guardar gráfico como imagen en memoria
+# Mostrar la descripción en la app debajo del gráfico
+descripcion = st.text_area("📝 Descripción de la distribución (opcional)", height=150)
+if descripcion.strip():
+    st.markdown("### 📝 Descripción")
+    st.markdown(descripcion)
+
+# Guardar gráfico como imagen PNG en memoria
 img_buffer = io.BytesIO()
 fig.savefig(img_buffer, format='png')
 plt.close(fig)
 img_buffer.seek(0)
 
-# Generar nombre con fecha
+# Nombre del archivo con fecha
 hoy = datetime.date.today().isoformat()
 nombre_archivo = f"distribucion_gauss_{hoy}.xlsx"
 
-# Crear nuevo DataFrame horizontal
+# Crear DataFrame horizontal para Excel
 headers = [f"X{i}" for i in x]
 horizontal_df = pd.DataFrame([
     np.round(percentages, 2),
     np.round(cajas, 0)
 ], index=["Porcentaje (%)", "Cajas estimadas"], columns=headers)
 
-
-# Crear Excel en memoria
+# Crear archivo Excel en memoria
 excel_buffer = io.BytesIO()
 with pd.ExcelWriter(excel_buffer, engine='xlsxwriter') as writer:
     horizontal_df.to_excel(writer, sheet_name='Distribución Horizontal')
-
-    # Insertar imagen
     worksheet = writer.sheets['Distribución Horizontal']
+
+    # Insertar gráfico
     worksheet.insert_image(len(horizontal_df.index) + 3, 0, 'grafico.png', {'image_data': img_buffer})
+
+    # Insertar descripción (columna I o 9)
+    if descripcion.strip():
+        worksheet.write(len(horizontal_df.index) + 3, 8, "Descripción:")
+        for i, linea in enumerate(descripcion.splitlines()):
+            worksheet.write(len(horizontal_df.index) + 4 + i, 8, linea)
 
 excel_buffer.seek(0)
 
 # Botón de descarga
 st.download_button(
-    label="📥 Descargar Excel con gráfico (horizontal)",
+    label="📥 Descargar Excel con gráfico y descripción",
     data=excel_buffer,
     file_name=nombre_archivo,
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
