@@ -57,7 +57,11 @@ nombre_archivo = f"distribucion_gauss_{hoy}.xlsx"
 
 # Crear nuevo DataFrame horizontal
 headers = [f"X{i}" for i in x]
-horizontal_df = pd.DataFrame([percentages, cajas], index=["Porcentaje (%)", "Cajas estimadas"], columns=headers)
+horizontal_df = pd.DataFrame([
+    np.round(percentages, 2),
+    np.round(cajas, 0)
+], index=["Porcentaje (%)", "Cajas estimadas"], columns=headers)
+
 
 # Crear Excel en memoria
 excel_buffer = io.BytesIO()
