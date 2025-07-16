@@ -78,11 +78,19 @@ with pd.ExcelWriter(excel_buffer, engine='xlsxwriter') as writer:
     # Insertar gráfico
     worksheet.insert_image(len(horizontal_df.index) + 3, 0, 'grafico.png', {'image_data': img_buffer})
 
-    # Insertar descripción (columna I o 9)
+     # Insertar descripción como cuadro de texto en celda A5
+    
     if descripcion.strip():
-        worksheet.write(len(horizontal_df.index) + 3, 8, "Descripción:")
-        for i, linea in enumerate(descripcion.splitlines()):
-            worksheet.write(len(horizontal_df.index) + 4 + i, 8, linea)
+        textbox_options = {
+            'x_offset': 5,
+            'y_offset': 5,
+            'width': 400,
+            'height': 150,
+            'font': {'name': 'Calibri', 'size': 11},
+            'align': {'vertical': 'top'}
+        }
+        worksheet.insert_textbox('A5', descripcion, textbox_options)
+
 
 excel_buffer.seek(0)
 
